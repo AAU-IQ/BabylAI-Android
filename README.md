@@ -324,7 +324,7 @@ BabylAI.getViewerComposable(
 
 ## Example App
 
-For a complete integration example, see [BabylAI-Android-Example](https://github.com/AAU-IQ/BabylAI-Android-Example).
+For a complete integration example, see [BabylAI-Android-Example]([https://github.com/AAU-IQ/BabylAI-Android-Example](https://github.com/AAU-IQ/BabylAI-Android/tree/main/app/src/main/java/iq/aau/babylai/android/BabylAI)).
 
 ## Contributing
 
