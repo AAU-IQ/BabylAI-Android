@@ -50,7 +50,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.52'
+    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.53'
 }
 ```
 
@@ -332,10 +332,8 @@ For any issues or feature requests, please contact the package maintainers or su
 
 ## License
 
-Copyright © 2024 BabylAI
+Copyright © 2025 BabylAI
 
 This software is provided under a custom license agreement. Usage is permitted only with explicit authorization from BabylAI. This software may not be redistributed, modified, or used in derivative works without written permission from BabylAI.
 
 All rights reserved.
-
-Latest version: v1.0.1
