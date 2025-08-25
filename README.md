@@ -31,7 +31,17 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") }
+        maven {
+            url = uri("https://raw.githubusercontent.com/AAU-IQ/BabylAI-Android/main/releases")
+            metadataSources {
+                mavenPom()        // trust the POM
+                artifact()        // and the .aar file itself
+                ignoreGradleMetadataRedirection()
+            }
+            content {
+                includeGroup("iq.aau.babylai.android")
+            }
+        }
     }
 }
 ```
@@ -40,7 +50,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.1'
+    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.3'
 }
 ```
 
