@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">BabylAI</string>
+    
+    <!-- BabylAI SDK strings -->
+    <string name="title">BabylAI</string>
+    <string name="message_input_hint">Type your message...</string>
+    <string name="end_chat">End Chat</string>
+    <string name="end_chat_desc">Are you sure you want to end the chat?</string>
+    <string name="chat_button">Chat with us</string>
+    <string name="ai_loading">AI is thinking...</string>
+    <string name="active_chat">Active Chat</string>
+    <string name="active_chat_desc">You have an active chat session</string>
+    <string name="close">Close</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_message">Something went wrong</string>
+    <string name="error_title">Error</string>
+    <string name="try_again">Try Again</string>
+</resources>
