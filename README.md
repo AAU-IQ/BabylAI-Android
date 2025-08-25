@@ -40,7 +40,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation 'com.github.AAU-IQ:BabylAI-Android:1.0.0'
+    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.1'
 }
 ```
 
@@ -328,4 +328,4 @@ This software is provided under a custom license agreement. Usage is permitted o
 
 All rights reserved.
 
-Latest version: v1.0.0
+Latest version: v1.0.1
