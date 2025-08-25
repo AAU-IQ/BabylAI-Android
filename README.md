@@ -50,7 +50,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.3'
+    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.52'
 }
 ```
 
