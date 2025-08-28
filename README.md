@@ -34,13 +34,10 @@ dependencyResolutionManagement {
         maven {
             url = uri("https://raw.githubusercontent.com/AAU-IQ/BabylAI-Android/main/releases")
             metadataSources {
-                mavenPom()        // trust the POM
-                artifact()        // and the .aar file itself
-                ignoreGradleMetadataRedirection()
+                mavenPom()
+                artifact()
             }
-            content {
-                includeGroup("iq.aau.babylai.android")
-            }
+            content { includeGroup("iq.aau.babylai.android") }
         }
     }
 }
@@ -50,7 +47,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation 'com.github.AAU-IQ:BabylAI-Android:v1.0.53'
+    implementation("iq.aau.babylai.android:babylaisdk:1.0.54")
 }
 ```
 
@@ -75,19 +72,31 @@ First, initialize BabylAI with the appropriate environment configuration and set
 ```kotlin
 import iq.aau.babylai.android.babylaisdk.BabylAI
 import iq.aau.babylai.android.babylaisdk.config.EnvironmentConfig
+import iq.aau.babylai.android.babylaisdk.config.BabylAIEnvironment
+import iq.aau.babylai.android.babylaisdk.core.enums.BabylAILocale
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Create environment configuration
+        val config = EnvironmentConfig.production(enableLogging = false) // or EnvironmentConfig.development()
         
         // Initialize BabylAI with environment configuration
-        BabylAI.initialize(
-            apiKey = "YOUR_API_KEY",
-            environment = EnvironmentConfig.PRODUCTION // or EnvironmentConfig.DEVELOPMENT
+        BabylAI.shared.initialize(
+            context = this,
+            config = config,
+            locale = BabylAILocale.ENGLISH, // or BabylAILocale.ARABIC
+            screenId = "YOUR_SCREEN_ID",
+            userInfo = mapOf(
+                "name" to "John Doe",
+                "email" to "johndoe@example.com",
+                "phone" to "+1234567890"
+            )
         )
         
         // IMPORTANT: You MUST set up a token callback for the package to work
-        BabylAI.setTokenCallback {
+        BabylAI.shared.setTokenCallback {
             // Example implementation to get a token
             return@setTokenCallback getToken() // Return your access token as string
         }
@@ -95,7 +104,7 @@ class MainActivity : AppCompatActivity() {
 }
 ```
 
-> ⚠️ **Important**: You must call `BabylAI.initialize()` and `BabylAI.setTokenCallback()` before using any other BabylAI functionality. Failure to do so will result in authentication errors when trying to launch the chat interface.
+> ⚠️ **Important**: You must call `BabylAI.shared.initialize()` and `BabylAI.shared.setTokenCallback()` before using any other BabylAI functionality. Failure to do so will result in authentication errors when trying to launch the chat interface.
 
 ### Environment Configuration
 
@@ -104,21 +113,26 @@ The package supports two environments:
 - **Production**: Uses production API endpoints, logging disabled by default
 - **Development**: Uses development API endpoints, logging enabled by default
 
-You can customize additional settings:
+You can create environment configurations using factory methods:
 
 ```kotlin
-// Production environment with custom settings
-BabylAI.initialize(
-    apiKey = "YOUR_API_KEY",
-    environment = EnvironmentConfig.PRODUCTION
-)
+// Production environment (logging disabled by default)
+val productionConfig = EnvironmentConfig.production()
 
-// Development environment with custom settings
-BabylAI.initialize(
-    apiKey = "YOUR_API_KEY",
-    environment = EnvironmentConfig.DEVELOPMENT
+// Production environment with logging enabled
+val productionConfigWithLogging = EnvironmentConfig.production(enableLogging = true)
+
+// Development environment (logging enabled by default)
+val developmentConfig = EnvironmentConfig.development()
+
+// Development environment with custom timeouts
+val customDevConfig = EnvironmentConfig.development(
+    enableLogging = true,
+    connectionTimeout = 60000,
+    receiveTimeout = 30000
 )
 ```
+
 
 ### 2. Basic Implementation
 
@@ -126,6 +140,9 @@ Here's a simple example of how to integrate BabylAI in your Android app:
 
 ```kotlin
 import iq.aau.babylai.android.babylaisdk.BabylAI
+import iq.aau.babylai.android.babylaisdk.BabylAITheme
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -134,13 +151,39 @@ class MainActivity : AppCompatActivity() {
         
         findViewById<Button>(R.id.openChatButton).setOnClickListener {
             // Show chat interface
-            BabylAI.showChat(
-                context = this,
-                theme = BabylAITheme.LIGHT, // or BabylAITheme.DARK
-                locale = BabylAILocale.ENGLISH // or BabylAILocale.ARABIC
-            )
+            // You can use the composable directly in your Compose UI
         }
     }
+}
+
+@Composable
+fun BabylAIChatScreen(
+    navController: NavController,
+    isDirect: Boolean = false,
+    isDarkMode: Boolean = false
+) {
+    // Handle back navigation using system back gesture
+    androidx.activity.compose.BackHandler {
+        navController.popBackStack()
+    }
+    
+    // Get the BabylAI viewer composable
+    val currentTheme = if (isDarkMode) BabylAITheme.DARK else BabylAITheme.LIGHT
+    
+    val viewerComposable = BabylAI.shared.getViewerComposable(
+        theme = currentTheme,
+        isDirect = isDirect,
+        onMessageReceived = { message ->
+            println("📨 Received message: $message")
+        },
+        onBack = {
+            // Handle SDK back navigation - go back to home screen
+            navController.popBackStack()
+        }
+    )
+    
+    // Display the SDK view - it will take full screen
+    viewerComposable()
 }
 ```
 
@@ -152,7 +195,6 @@ For a more complete implementation with theme and language switching:
 import androidx.compose.runtime.*
 import iq.aau.babylai.android.babylaisdk.BabylAI
 import iq.aau.babylai.android.babylaisdk.BabylAITheme
-import iq.aau.babylai.android.babylaisdk.BabylAILocale
 
 @Composable
 fun BabylAIExample() {
@@ -170,7 +212,7 @@ fun BabylAIExample() {
     }
     
     if (showChat) {
-        BabylAI.getViewerComposable(
+        BabylAI.shared.getViewerComposable(
             theme = BabylAITheme.LIGHT,
             isDirect = false,
             onMessageReceived = { message ->
@@ -182,7 +224,7 @@ fun BabylAIExample() {
     }
     
     if (showActiveChat) {
-        BabylAI.getViewerComposable(
+        BabylAI.shared.getViewerComposable(
             theme = BabylAITheme.DARK,
             isDirect = true,
             onMessageReceived = { message ->
@@ -226,7 +268,7 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel()) {
     val showChat by viewModel.showChat.collectAsState()
     
     if (showChat) {
-        BabylAI.getViewerComposable(
+        BabylAI.shared.getViewerComposable(
             theme = BabylAITheme.LIGHT,
             onMessageReceived = { message ->
                 viewModel.handleNewMessage(message)
@@ -243,15 +285,18 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel()) {
 
 #### Methods
 
-- `BabylAI.initialize(apiKey: String, environment: EnvironmentConfig)`: Initialize BabylAI with environment configuration
-- `BabylAI.setTokenCallback(callback: () -> String)`: Set a callback function that will be called when the token needs to be refreshed
-- `BabylAI.showChat(context: Context, theme: BabylAITheme = BabylAITheme.LIGHT, locale: BabylAILocale = BabylAILocale.ENGLISH)`: Show the BabylAI chat interface
-- `BabylAI.getViewerComposable(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Get the BabylAI chat interface as a Compose composable
+- `BabylAI.shared.initialize(context: Context, config: EnvironmentConfig, locale: BabylAILocale, screenId: String, userInfo: Map<String, Any>)`: Initialize BabylAI with environment configuration
+- `BabylAI.shared.setTokenCallback(callback: suspend () -> String)`: Set a callback function that will be called when the token needs to be refreshed
+- `BabylAI.shared.getViewerComposable(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Get the BabylAI chat interface as a Compose composable
+- `BabylAI.shared.makeView(theme: BabylAITheme, userInfo: Map<String, Any>, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Create the main SDK view
+- `BabylAI.shared.viewer(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Create the SDK viewer with token validation wrapper
+- `BabylAI.shared.getSDKComposable(theme: BabylAITheme = BabylAITheme.LIGHT, userInfo: Map<String, Any> = emptyMap(), onMessageReceived: ((String) -> Unit)? = null) -> @Composable () -> Unit`: Get the main SDK composable for direct integration
+- `BabylAI.shared.getDirectSDKContent(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Get the SDK content directly without token validation (for debugging)
 
 #### Environment Configuration
 
-- `EnvironmentConfig.PRODUCTION`: Production environment configuration
-- `EnvironmentConfig.DEVELOPMENT`: Development environment configuration
+- `EnvironmentConfig.production(enableLogging: Boolean = false, connectionTimeout: Int = 30_000, receiveTimeout: Int = 15_000)`: Production environment configuration
+- `EnvironmentConfig.development(enableLogging: Boolean = true, connectionTimeout: Int = 30_000, receiveTimeout: Int = 15_000)`: Development environment configuration
 
 #### Theme Configuration
 
@@ -305,7 +350,7 @@ This ensures that your users won't experience disruptions when their token expir
 The package provides a callback for handling new messages through the `onMessageReceived` parameter. You can implement your own notification system or message handling logic. Here's an example of how you might handle new messages:
 
 ```kotlin
-BabylAI.getViewerComposable(
+BabylAI.shared.getViewerComposable(
     onMessageReceived = { message ->
         // Implement your preferred notification system
         // For example, using NotificationManager

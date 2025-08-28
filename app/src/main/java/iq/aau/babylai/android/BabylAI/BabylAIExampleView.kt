@@ -240,7 +240,7 @@ fun HomeScreen(
                                 context = context,
                                 config = config,
                                 locale = if (isArabic) BabylAILocale.ARABIC else BabylAILocale.ENGLISH,
-                                screenId = "aacf4061-67b9-4cb3-bb8d-c8cf601ddfe0",
+                                screenId = "YOUR_SCREEN_ID",
                                 userInfo = mapOf(
                                     "name" to "John Doe",
                                     "email" to "johndoe@example.com",
@@ -404,8 +404,8 @@ fun BabylAIDirectChatScreen(
 suspend fun getTokenExample(): String {
     return try {
         TokenClient.fetchToken(
-            apiKey = "3cBPq0TCQZn3cXlmN1JNFz+bMoy6J5LU5Wxvh2UnWn0=",
-            tenantId = "cfa94ce6-767f-4541-930f-d6961c33a49c"
+            apiKey = "YOUR_API_KEY",
+            tenantId = "TENANT_ID"
         )
     } catch (e: Exception) {
         println("❌ Error during token fetch: ${e.message}")
