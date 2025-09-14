@@ -7,6 +7,7 @@
 
 package iq.aau.babylai.android.BabylAI
 
+import android.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Colors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -54,8 +56,11 @@ import androidx.navigation.compose.rememberNavController
 import iq.aau.babylai.android.babylaisdk.BabylAI
 import iq.aau.babylai.android.babylaisdk.BabylAITheme
 import iq.aau.babylai.android.babylaisdk.config.EnvironmentConfig
+import iq.aau.babylai.android.babylaisdk.config.ThemeConfig
 import iq.aau.babylai.android.babylaisdk.core.enums.BabylAILocale
+import iq.aau.babylai.android.babylaisdk.core.errors.BabylAIError
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 /**
  * Environment options for the example app
@@ -187,7 +192,10 @@ fun HomeScreen(
                 Text("Arabic Language")
                 Switch(
                     checked = isArabic,
-                    onCheckedChange = { onLanguageChange(it) }
+                    onCheckedChange = {
+                        onLanguageChange(it)
+                        BabylAI.shared.setLocale(if (it) BabylAILocale.ARABIC else BabylAILocale.ENGLISH)
+                    }
                 )
             }
             
@@ -241,15 +249,20 @@ fun HomeScreen(
                                 config = config,
                                 locale = if (isArabic) BabylAILocale.ARABIC else BabylAILocale.ENGLISH,
                                 screenId = "YOUR_SCREEN_ID",
-                                userInfo = mapOf(
-                                    "name" to "John Doe",
-                                    "email" to "johndoe@example.com",
-                                    "phone" to "+1234567890"
+                                themeConfig = ThemeConfig(
+                                    primaryColor = "#4A6741".toColorInt(), // Elegant forest green for light theme
+                                    secondaryColor = "#D4AF37".toColorInt(), // Sophisticated gold for light theme
+                                    primaryColorDark = "#81C784".toColorInt(), // Soft sage green for dark theme
+                                    secondaryColorDark = "#F9D71C".toColorInt(), // Warm amber for dark theme
+                                    headerLogoRes = R.drawable.ngrok_light // Using custom ngrok logo
                                 )
                             )
                             
                             BabylAI.shared.setTokenCallback {
                                 getTokenExample()
+                            }
+                            BabylAI.shared.setOnErrorReceived { error: BabylAIError ->
+                                println("❌ SDK Error [${error.errorCode}]: ${error.userFriendlyMessage}")
                             }
                             
                             onInitializationChange(true)

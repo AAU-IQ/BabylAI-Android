@@ -10,13 +10,16 @@ An Android SDK that provides integration with BabylAI chat functionality, suppor
 
 - 🚀 Easy integration with BabylAI chat
 - 🌓 Support for light and dark themes
-- 🌍 Multilingual support (English and Arabic with RTL)
+- 🎨 **Advanced Theme Customization** - Custom brand colors for light and dark themes
+- 🖼️ **Custom Logo Support** - Replace header logo with your brand logo
+- 🌍 **Dynamic Language Switching** - Runtime language change (English and Arabic with RTL)
 - 📬 Message receiving callback for custom notification handling
+- ⚠️ **Comprehensive Error Handling** - Global and view-specific error callbacks
 - ⚡ Quick access to active chats
 - 🏗️ Environment-based configuration (Production/Development)
 - 🔒 Secure, predefined API endpoints
 - 📱 Jetpack Compose UI components
-- 🎨 Material Design 3 theming
+- 🎨 Material Design 3 theming with automatic color generation
 
 ## Installation
 
@@ -47,7 +50,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation("iq.aau.babylai.android:babylaisdk:1.0.54")
+    implementation("iq.aau.babylai.android:babylaisdk:1.0.55")
 }
 ```
 
@@ -73,7 +76,10 @@ First, initialize BabylAI with the appropriate environment configuration and set
 import iq.aau.babylai.android.babylaisdk.BabylAI
 import iq.aau.babylai.android.babylaisdk.config.EnvironmentConfig
 import iq.aau.babylai.android.babylaisdk.config.BabylAIEnvironment
+import iq.aau.babylai.android.babylaisdk.config.ThemeConfig
 import iq.aau.babylai.android.babylaisdk.core.enums.BabylAILocale
+import iq.aau.babylai.android.babylaisdk.core.errors.BabylAIError
+import androidx.core.graphics.toColorInt
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         // Create environment configuration
         val config = EnvironmentConfig.production(enableLogging = false) // or EnvironmentConfig.development()
         
-        // Initialize BabylAI with environment configuration
+        // Initialize BabylAI with environment configuration and custom theming
         BabylAI.shared.initialize(
             context = this,
             config = config,
@@ -92,6 +98,13 @@ class MainActivity : AppCompatActivity() {
                 "name" to "John Doe",
                 "email" to "johndoe@example.com",
                 "phone" to "+1234567890"
+            ),
+            themeConfig = ThemeConfig(
+                primaryColor = "#4A6741".toColorInt(),           // Elegant forest green for light theme
+                secondaryColor = "#D4AF37".toColorInt(),         // Sophisticated gold for light theme
+                primaryColorDark = "#81C784".toColorInt(),       // Soft sage green for dark theme
+                secondaryColorDark = "#F9D71C".toColorInt(),     // Warm amber for dark theme
+                headerLogoRes = R.drawable.your_custom_logo      // Optional: Your brand logo
             )
         )
         
@@ -100,6 +113,15 @@ class MainActivity : AppCompatActivity() {
             // Example implementation to get a token
             return@setTokenCallback getToken() // Return your access token as string
         }
+        
+        // Optional: Set up global error handling callback
+        BabylAI.shared.setOnErrorReceived { error: BabylAIError ->
+            println("❌ SDK Error [${error.errorCode}]: ${error.userFriendlyMessage}")
+            // Handle errors globally - show notifications, log to analytics, etc.
+        }
+        
+        // Optional: Change language dynamically after initialization
+        BabylAI.shared.setLocale(BabylAILocale.ARABIC) // Switch to Arabic with RTL support
     }
 }
 ```
@@ -133,6 +155,69 @@ val customDevConfig = EnvironmentConfig.development(
 )
 ```
 
+### Dynamic Language Switching
+
+The BabylAI SDK supports dynamic language switching without requiring re-initialization. You can change the language at runtime and the SDK will update all text content and layout direction accordingly.
+
+#### Setting Language Dynamically
+
+```kotlin
+// Switch to Arabic with RTL support
+BabylAI.shared.setLocale(BabylAILocale.ARABIC)
+
+// Switch back to English with LTR support
+BabylAI.shared.setLocale(BabylAILocale.ENGLISH)
+
+// Get current locale
+val currentLocale = BabylAI.shared.getLocale()
+```
+
+#### Example with UI Controls
+
+```kotlin
+@Composable
+fun LanguageSwitcher() {
+    var isArabic by remember { mutableStateOf(false) }
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("Arabic Language")
+        Switch(
+            checked = isArabic,
+            onCheckedChange = { enabled ->
+                isArabic = enabled
+                // Update SDK language dynamically
+                BabylAI.shared.setLocale(
+                    if (enabled) BabylAILocale.ARABIC else BabylAILocale.ENGLISH
+                )
+            }
+        )
+    }
+}
+```
+
+#### Language Features
+
+- **English (BabylAILocale.ENGLISH)**:
+  - Left-to-right (LTR) layout direction
+  - English text content and labels
+  - Western number formatting
+
+- **Arabic (BabylAILocale.ARABIC)**:
+  - Right-to-left (RTL) layout direction
+  - Arabic text content and labels
+  - Arabic/Eastern number formatting
+  - Proper RTL text alignment
+
+#### Notes
+
+- Language changes take effect immediately in active SDK views
+- The locale setting persists across SDK sessions
+- RTL layout automatically adjusts all UI components, icons, and navigation
+- No re-initialization required when switching languages
 
 ### 2. Basic Implementation
 
@@ -285,8 +370,11 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel()) {
 
 #### Methods
 
-- `BabylAI.shared.initialize(context: Context, config: EnvironmentConfig, locale: BabylAILocale, screenId: String, userInfo: Map<String, Any>)`: Initialize BabylAI with environment configuration
+- `BabylAI.shared.initialize(context: Context, config: EnvironmentConfig, locale: BabylAILocale, screenId: String, userInfo: Map<String, Any>, themeConfig: ThemeConfig? = null)`: Initialize BabylAI with environment configuration and optional theme customization
 - `BabylAI.shared.setTokenCallback(callback: suspend () -> String)`: Set a callback function that will be called when the token needs to be refreshed
+- `BabylAI.shared.setOnErrorReceived(callback: (BabylAIError) -> Unit)`: Set a global error callback to handle all SDK errors
+- `BabylAI.shared.setLocale(locale: BabylAILocale)`: Change the SDK language dynamically without re-initialization
+- `BabylAI.shared.getLocale(): BabylAILocale`: Get the currently selected SDK language
 - `BabylAI.shared.getViewerComposable(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Get the BabylAI chat interface as a Compose composable
 - `BabylAI.shared.makeView(theme: BabylAITheme, userInfo: Map<String, Any>, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Create the main SDK view
 - `BabylAI.shared.viewer(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Create the SDK viewer with token validation wrapper
@@ -302,6 +390,7 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel()) {
 
 - `BabylAITheme.LIGHT`: Light theme
 - `BabylAITheme.DARK`: Dark theme
+- `ThemeConfig(primaryColor, secondaryColor, primaryColorDark, secondaryColorDark, headerLogoRes)`: Comprehensive theme customization with separate light/dark colors and custom logo support
 
 #### Locale Configuration
 
@@ -341,8 +430,10 @@ This ensures that your users won't experience disruptions when their token expir
 |-----------|------|-------------|
 | theme | BabylAITheme | UI theme (.LIGHT or .DARK) |
 | locale | BabylAILocale | Language (.ENGLISH or .ARABIC) |
+| themeConfig | ThemeConfig? | Optional theme customization with brand colors and logo |
 | isDirect | Boolean | Whether to open active chat directly |
 | onMessageReceived | ((String) -> Unit)? | Callback for handling new messages |
+| onErrorReceived | ((BabylAIError) -> Unit)? | Callback for handling view-specific errors |
 | onBack | () -> Unit | Callback for back navigation |
 
 ## Message Handling
@@ -359,6 +450,26 @@ BabylAI.shared.getViewerComposable(
     }
 )()
 ```
+
+## Error Handling in Views
+
+In addition to the global error callback, individual views can also handle errors locally:
+
+```kotlin
+BabylAI.shared.getViewerComposable(
+    theme = BabylAITheme.LIGHT,
+    onMessageReceived = { message ->
+        // Handle new messages
+        handleNewMessage(message)
+    },
+    onErrorReceived = { error ->
+        // Handle errors specific to this view instance
+        handleViewError(error)
+    }
+)()
+```
+
+> **Note**: View-specific error callbacks will be called in addition to the global error callback, giving you flexibility to handle errors at both global and local levels.
 
 ## Prerequisites
 
