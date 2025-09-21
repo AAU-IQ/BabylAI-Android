@@ -83,6 +83,7 @@ fun BabylAIExampleView() {
     var isInitialized by rememberSaveable { mutableStateOf(false) }
     var environment by rememberSaveable { mutableStateOf(BabylAIEnvironment.DEVELOPMENT) }
     var initializationError by rememberSaveable { mutableStateOf<String?>(null) }
+    val SCREEN_ID = "YOUR_SCREEN_ID"
     
     NavHost(
         navController = navController,
@@ -107,6 +108,7 @@ fun BabylAIExampleView() {
             BabylAIChatScreen(
                 navController = navController,
                 isDirect = false,
+                screenId = SCREEN_ID,
                 isDarkMode = isDarkMode
             )
         }
@@ -114,6 +116,7 @@ fun BabylAIExampleView() {
             BabylAIChatScreen(
                 navController = navController,
                 isDirect = true,
+                screenId = SCREEN_ID,
                 isDarkMode = isDarkMode
             )
         }
@@ -121,6 +124,7 @@ fun BabylAIExampleView() {
             BabylAIDirectChatScreen(
                 navController = navController,
                 isDirect = false,
+                screenId = SCREEN_ID,
                 isDarkMode = isDarkMode
             )
         }
@@ -248,7 +252,6 @@ fun HomeScreen(
                                 context = context,
                                 config = config,
                                 locale = if (isArabic) BabylAILocale.ARABIC else BabylAILocale.ENGLISH,
-                                screenId = "YOUR_SCREEN_ID",
                                 themeConfig = ThemeConfig(
                                     primaryColor = "#4A6741".toColorInt(), // Elegant forest green for light theme
                                     secondaryColor = "#D4AF37".toColorInt(), // Sophisticated gold for light theme
@@ -351,6 +354,7 @@ fun HomeScreen(
 fun BabylAIChatScreen(
     navController: NavController,
     isDirect: Boolean,
+    screenId: String,
     isDarkMode: Boolean
 ) {
     // Handle back navigation using system back gesture
@@ -366,6 +370,7 @@ fun BabylAIChatScreen(
     val viewerComposable = BabylAI.shared.getViewerComposable(
         theme = currentTheme,
         isDirect = isDirect,
+        screenId = screenId,
         onMessageReceived = { message ->
             println("📨 Received message: $message")
         },
@@ -386,6 +391,7 @@ fun BabylAIChatScreen(
 fun BabylAIDirectChatScreen(
     navController: NavController,
     isDirect: Boolean,
+    screenId: String,
     isDarkMode: Boolean
 ) {
     // Handle back navigation using system back gesture
@@ -398,6 +404,7 @@ fun BabylAIDirectChatScreen(
     val directContent = BabylAI.shared.getDirectSDKContent(
         theme = if (isDarkMode) BabylAITheme.DARK else BabylAITheme.LIGHT,
         isDirect = isDirect,
+        screenId = screenId,
         onMessageReceived = { message ->
             println("📨 [Direct] Received message: $message")
         },

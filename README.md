@@ -50,7 +50,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation("iq.aau.babylai.android:babylaisdk:1.0.55")
+    implementation("iq.aau.babylai.android:babylaisdk:1.0.56")
 }
 ```
 
@@ -93,7 +93,6 @@ class MainActivity : AppCompatActivity() {
             context = this,
             config = config,
             locale = BabylAILocale.ENGLISH, // or BabylAILocale.ARABIC
-            screenId = "YOUR_SCREEN_ID",
             userInfo = mapOf(
                 "name" to "John Doe",
                 "email" to "johndoe@example.com",
@@ -258,6 +257,7 @@ fun BabylAIChatScreen(
     val viewerComposable = BabylAI.shared.getViewerComposable(
         theme = currentTheme,
         isDirect = isDirect,
+        screenId = "YOUR_SCREEN_ID",
         onMessageReceived = { message ->
             println("📨 Received message: $message")
         },
@@ -300,6 +300,7 @@ fun BabylAIExample() {
         BabylAI.shared.getViewerComposable(
             theme = BabylAITheme.LIGHT,
             isDirect = false,
+            screenId = "YOUR_SCREEN_ID",
             onMessageReceived = { message ->
                 // Handle new message notifications
                 println("New message: $message")
@@ -312,6 +313,7 @@ fun BabylAIExample() {
         BabylAI.shared.getViewerComposable(
             theme = BabylAITheme.DARK,
             isDirect = true,
+            screenId = "YOUR_SCREEN_ID",
             onMessageReceived = { message ->
                 // Handle messages for active chat
                 println("Active chat message: $message")
@@ -355,6 +357,7 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel()) {
     if (showChat) {
         BabylAI.shared.getViewerComposable(
             theme = BabylAITheme.LIGHT,
+            screenId = "YOUR_SCREEN_ID",
             onMessageReceived = { message ->
                 viewModel.handleNewMessage(message)
             },
