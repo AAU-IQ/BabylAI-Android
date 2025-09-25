@@ -50,7 +50,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation("iq.aau.babylai.android:babylaisdk:1.0.56")
+    implementation("iq.aau.babylai.android:babylaisdk:1.0.57")
 }
 ```
 
@@ -104,7 +104,11 @@ class MainActivity : AppCompatActivity() {
                 primaryColorDark = "#81C784".toColorInt(),       // Soft sage green for dark theme
                 secondaryColorDark = "#F9D71C".toColorInt(),     // Warm amber for dark theme
                 headerLogoRes = R.drawable.your_custom_logo      // Optional: Your brand logo
-            )
+            ),
+            onErrorReceived = { error ->
+                // Optional: Handle global errors
+                println("❌ SDK Error [${error.errorCode}]: ${error.userFriendlyMessage}")
+            }
         )
         
         // IMPORTANT: You MUST set up a token callback for the package to work
@@ -254,14 +258,14 @@ fun BabylAIChatScreen(
     // Get the BabylAI viewer composable
     val currentTheme = if (isDarkMode) BabylAITheme.DARK else BabylAITheme.LIGHT
     
-    val viewerComposable = BabylAI.shared.getViewerComposable(
+    val viewerComposable = BabylAI.shared.viewer(
         theme = currentTheme,
         isDirect = isDirect,
         screenId = "YOUR_SCREEN_ID",
         onMessageReceived = { message ->
             println("📨 Received message: $message")
         },
-        onBack = {
+        onDismiss = {
             // Handle SDK back navigation - go back to home screen
             navController.popBackStack()
         }
@@ -297,7 +301,7 @@ fun BabylAIExample() {
     }
     
     if (showChat) {
-        BabylAI.shared.getViewerComposable(
+        BabylAI.shared.viewer(
             theme = BabylAITheme.LIGHT,
             isDirect = false,
             screenId = "YOUR_SCREEN_ID",
@@ -305,21 +309,20 @@ fun BabylAIExample() {
                 // Handle new message notifications
                 println("New message: $message")
             },
-            onBack = { showChat = false }
-        )()
+            onDismiss = { showChat = false }
+        )
     }
     
     if (showActiveChat) {
-        BabylAI.shared.getViewerComposable(
+        BabylAI.shared.presentActiveChat(
             theme = BabylAITheme.DARK,
-            isDirect = true,
             screenId = "YOUR_SCREEN_ID",
             onMessageReceived = { message ->
                 // Handle messages for active chat
                 println("Active chat message: $message")
             },
-            onBack = { showActiveChat = false }
-        )()
+            onDismiss = { showActiveChat = false }
+        )
     }
 }
 ```
@@ -355,14 +358,15 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel()) {
     val showChat by viewModel.showChat.collectAsState()
     
     if (showChat) {
-        BabylAI.shared.getViewerComposable(
+        BabylAI.shared.viewer(
             theme = BabylAITheme.LIGHT,
+            isDirect = false,
             screenId = "YOUR_SCREEN_ID",
             onMessageReceived = { message ->
                 viewModel.handleNewMessage(message)
             },
-            onBack = { viewModel.closeChat() }
-        )()
+            onDismiss = { viewModel.closeChat() }
+        )
     }
 }
 ```
@@ -373,16 +377,15 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel()) {
 
 #### Methods
 
-- `BabylAI.shared.initialize(context: Context, config: EnvironmentConfig, locale: BabylAILocale, screenId: String, userInfo: Map<String, Any>, themeConfig: ThemeConfig? = null)`: Initialize BabylAI with environment configuration and optional theme customization
+- `BabylAI.shared.initialize(context: Context, config: EnvironmentConfig, locale: BabylAILocale, userInfo: Map<String, Any>?, themeConfig: ThemeConfig?, onErrorReceived: ((BabylAIError) -> Unit)?)`: Initialize BabylAI with environment configuration and optional theme customization
 - `BabylAI.shared.setTokenCallback(callback: suspend () -> String)`: Set a callback function that will be called when the token needs to be refreshed
 - `BabylAI.shared.setOnErrorReceived(callback: (BabylAIError) -> Unit)`: Set a global error callback to handle all SDK errors
 - `BabylAI.shared.setLocale(locale: BabylAILocale)`: Change the SDK language dynamically without re-initialization
 - `BabylAI.shared.getLocale(): BabylAILocale`: Get the currently selected SDK language
-- `BabylAI.shared.getViewerComposable(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Get the BabylAI chat interface as a Compose composable
-- `BabylAI.shared.makeView(theme: BabylAITheme, userInfo: Map<String, Any>, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Create the main SDK view
-- `BabylAI.shared.viewer(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Create the SDK viewer with token validation wrapper
-- `BabylAI.shared.getSDKComposable(theme: BabylAITheme = BabylAITheme.LIGHT, userInfo: Map<String, Any> = emptyMap(), onMessageReceived: ((String) -> Unit)? = null) -> @Composable () -> Unit`: Get the main SDK composable for direct integration
-- `BabylAI.shared.getDirectSDKContent(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Get the SDK content directly without token validation (for debugging)
+- `BabylAI.shared.getViewerComposable(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, screenId: String, onMessageReceived: ((String) -> Unit)? = null, onBack: () -> Unit = {}) -> @Composable () -> Unit`: Get the BabylAI chat interface as a Compose composable
+- `BabylAI.shared.makeView(theme: BabylAITheme, userInfo: Map<String, Any>, screenId: String, onMessageReceived: ((String) -> Unit)? = null, onErrorReceived: ((BabylAIError) -> Unit)? = null) -> @Composable`: Create the main SDK view
+- `BabylAI.shared.viewer(theme: BabylAITheme = BabylAITheme.LIGHT, isDirect: Boolean = false, screenId: String, onMessageReceived: ((String) -> Unit)? = null, onErrorReceived: ((BabylAIError) -> Unit)? = null, onDismiss: () -> Unit = {}) -> @Composable`: Create the SDK viewer with token validation wrapper
+- `BabylAI.shared.presentActiveChat(theme: BabylAITheme, screenId: String, onMessageReceived: ((String) -> Unit)? = null, onErrorReceived: ((BabylAIError) -> Unit)? = null, onDismiss: () -> Unit = {}) -> @Composable`: Present the active chat directly
 
 #### Environment Configuration
 
@@ -444,14 +447,15 @@ This ensures that your users won't experience disruptions when their token expir
 The package provides a callback for handling new messages through the `onMessageReceived` parameter. You can implement your own notification system or message handling logic. Here's an example of how you might handle new messages:
 
 ```kotlin
-BabylAI.shared.getViewerComposable(
+BabylAI.shared.viewer(
+    screenId = "YOUR_SCREEN_ID",
     onMessageReceived = { message ->
         // Implement your preferred notification system
         // For example, using NotificationManager
         // or any other notification approach
         showCustomNotification(message)
     }
-)()
+)
 ```
 
 ## Error Handling in Views
@@ -459,8 +463,9 @@ BabylAI.shared.getViewerComposable(
 In addition to the global error callback, individual views can also handle errors locally:
 
 ```kotlin
-BabylAI.shared.getViewerComposable(
+BabylAI.shared.viewer(
     theme = BabylAITheme.LIGHT,
+    screenId = "YOUR_SCREEN_ID",
     onMessageReceived = { message ->
         // Handle new messages
         handleNewMessage(message)
@@ -469,7 +474,7 @@ BabylAI.shared.getViewerComposable(
         // Handle errors specific to this view instance
         handleViewError(error)
     }
-)()
+)
 ```
 
 > **Note**: View-specific error callbacks will be called in addition to the global error callback, giving you flexibility to handle errors at both global and local levels.
