@@ -3,8 +3,8 @@
   <groupId>iq.aau.babylai.android</groupId>
   <artifactId>babylaisdk</artifactId>
   <versioning>
-    <latest>1.0.60</latest>
-    <release>1.0.60</release>
+    <latest>1.0.61-beta</latest>
+    <release>1.0.61-beta</release>
     <versions>
       <version>1.0.4</version>
       <version>1.0.51</version>
@@ -18,7 +18,8 @@
       <version>1.0.59</version>
       <version>1.0.60-beta</version>
       <version>1.0.60</version>
+      <version>1.0.61-beta</version>
     </versions>
-    <lastUpdated>20251012100642</lastUpdated>
+    <lastUpdated>20251012134751</lastUpdated>
   </versioning>
 </metadata>
