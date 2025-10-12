@@ -50,7 +50,7 @@ Add the dependency to your app-level `build.gradle.kts`:
 
 ```gradle
 dependencies {
-    implementation("iq.aau.babylai.android:babylaisdk:1.0.59")
+    implementation("iq.aau.babylai.android:babylaisdk:1.0.60")
 }
 ```
 
