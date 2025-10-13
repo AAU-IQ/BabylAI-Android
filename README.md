@@ -23,12 +23,35 @@ An Android SDK that provides integration with BabylAI chat functionality, suppor
 
 ## Installation
 
-### Option 1: JitPack (Recommended)
+### Maven Central (Recommended)
 
-Add the JitPack repository to your project-level `build.gradle` or `settings.gradle.kts`:
+The BabylAI Android SDK is published to Maven Central for easy integration. Simply add the dependency to your app-level `build.gradle.kts`:
 
-```gradle
-// settings.gradle.kts
+```kotlin
+dependencies {
+    implementation("io.github.aau-iq:babylai-android-sdk:1.0.61-beta3")
+}
+```
+
+**That's it!** Maven Central is already configured by default in Android projects. No additional repository configuration needed.
+
+#### Minimum Requirements
+```kotlin
+android {
+    defaultConfig {
+        minSdk = 24  // Required by BabylAI SDK
+    }
+}
+```
+
+### Alternative Installation Methods
+
+<details>
+<summary>Option 2: GitHub Releases Repository</summary>
+
+Add the GitHub repository to your `settings.gradle.kts`:
+
+```kotlin
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -46,25 +69,30 @@ dependencyResolutionManagement {
 }
 ```
 
-Add the dependency to your app-level `build.gradle.kts`:
+Add the dependency:
 
-```gradle
+```kotlin
 dependencies {
-    implementation("iq.aau.babylai.android:babylaisdk:1.0.60")
+    implementation("iq.aau.babylai.android:babylaisdk:1.0.61-beta3")
 }
 ```
 
-### Option 2: Direct AAR Download
+</details>
+
+<details>
+<summary>Option 3: Direct AAR Download</summary>
 
 1. Download the latest AAR from [releases/latest/BabylAISDK-release.aar](releases/latest/BabylAISDK-release.aar)
 2. Place it in your app's `libs/` directory
 3. Add to your `build.gradle.kts`:
 
-```gradle
+```kotlin
 dependencies {
-    implementation files('libs/BabylAISDK-release.aar')
+    implementation(files("libs/BabylAISDK-release.aar"))
 }
 ```
+
+</details>
 
 ## Usage
 
