@@ -29,7 +29,7 @@ The BabylAI Android SDK is published to Maven Central for easy integration. Simp
 
 ```kotlin
 dependencies {
-    implementation("io.github.aau-iq:babylai-android-sdk:1.0.62")
+    implementation("io.github.aau-iq:babylai-android-sdk:1.0.63")
 }
 ```
 
