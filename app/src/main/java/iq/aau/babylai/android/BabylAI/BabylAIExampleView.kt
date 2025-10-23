@@ -83,7 +83,7 @@ fun BabylAIExampleView() {
     var isInitialized by rememberSaveable { mutableStateOf(false) }
     var environment by rememberSaveable { mutableStateOf(BabylAIEnvironment.DEVELOPMENT) }
     var initializationError by rememberSaveable { mutableStateOf<String?>(null) }
-    val SCREEN_ID = "YOUR_SCREEN_ID"
+    val SCREEN_ID = "b0e9cb1d-a0f7-40e0-aa49-4127069d9cdc"
     
     NavHost(
         navController = navController,
@@ -107,7 +107,6 @@ fun BabylAIExampleView() {
         composable("chat") {
             BabylAIChatScreen(
                 navController = navController,
-                isDirect = false,
                 screenId = SCREEN_ID,
                 isDarkMode = isDarkMode
             )
@@ -115,7 +114,6 @@ fun BabylAIExampleView() {
         composable("activeChat") {
             BabylAIChatScreen(
                 navController = navController,
-                isDirect = true,
                 screenId = SCREEN_ID,
                 isDarkMode = isDarkMode
             )
@@ -123,7 +121,6 @@ fun BabylAIExampleView() {
         composable("chatDirect") {
             BabylAIDirectChatScreen(
                 navController = navController,
-                isDirect = false,
                 screenId = SCREEN_ID,
                 isDarkMode = isDarkMode
             )
@@ -214,11 +211,11 @@ fun HomeScreen(
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    BabylAIEnvironment.values().forEachIndexed { index, env ->
+                    BabylAIEnvironment.entries.forEachIndexed { index, env ->
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(
                                 index = index,
-                                count = BabylAIEnvironment.values().size
+                                count = BabylAIEnvironment.entries.size
                             ),
                             onClick = { onEnvironmentChange(env) },
                             selected = environment == env
@@ -353,7 +350,6 @@ fun HomeScreen(
 @Composable
 fun BabylAIChatScreen(
     navController: NavController,
-    isDirect: Boolean,
     screenId: String,
     isDarkMode: Boolean
 ) {
@@ -367,21 +363,21 @@ fun BabylAIChatScreen(
     val currentTheme = if (isDarkMode) BabylAITheme.DARK else BabylAITheme.LIGHT
     println("🎨 BabylAIChatScreen - isDarkMode: $isDarkMode, theme: $currentTheme")
     
-    val viewerComposable = BabylAI.shared.getViewerComposable(
+    val viewerComposable = BabylAI.shared.viewer(
         theme = currentTheme,
-        isDirect = isDirect,
+        isDirect = false,
         screenId = screenId,
         onMessageReceived = { message ->
             println("📨 Received message: $message")
         },
-        onBack = {
+        onDismiss ={
             // Handle SDK back navigation - go back to home screen
             navController.popBackStack()
         }
     )
-    
+
     // Display the SDK view - it will take full screen
-    viewerComposable()
+//    viewerComposable()
 }
 
 /**
@@ -390,7 +386,6 @@ fun BabylAIChatScreen(
 @Composable
 fun BabylAIDirectChatScreen(
     navController: NavController,
-    isDirect: Boolean,
     screenId: String,
     isDarkMode: Boolean
 ) {
@@ -398,24 +393,24 @@ fun BabylAIDirectChatScreen(
     androidx.activity.compose.BackHandler {
         navController.popBackStack()
     }
-    
+
     // No Scaffold or TopAppBar - let the SDK handle full-screen experience
     // Get the direct SDK content without token validation
-    val directContent = BabylAI.shared.getDirectSDKContent(
+    val directContent = BabylAI.shared.viewer(
         theme = if (isDarkMode) BabylAITheme.DARK else BabylAITheme.LIGHT,
-        isDirect = isDirect,
+        isDirect = true,
         screenId = screenId,
         onMessageReceived = { message ->
             println("📨 [Direct] Received message: $message")
         },
-        onBack = {
+        onDismiss = {
             // Handle SDK back navigation - go back to home screen
             navController.popBackStack()
         }
     )
-    
+
     // Display the SDK view - it will take full screen
-    directContent()
+//    directContent()
 }
 
 /**
@@ -424,8 +419,8 @@ fun BabylAIDirectChatScreen(
 suspend fun getTokenExample(): String {
     return try {
         TokenClient.fetchToken(
-            apiKey = "YOUR_API_KEY",
-            tenantId = "TENANT_ID"
+            apiKey = "Y0DWmfXvna4Ojmj6Huru3mn/BnMU2ciSv2wDDeTpA3c=",
+            tenantId = "c300b185-8554-436c-ae64-ab5db552594b"
         )
     } catch (e: Exception) {
         println("❌ Error during token fetch: ${e.message}")

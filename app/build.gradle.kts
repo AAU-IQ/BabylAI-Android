@@ -42,8 +42,9 @@ android {
 
 dependencies {
     // BabylAI SDK - from distribution repository
-    implementation("iq.aau.babylai.android:babylaisdk:1.0.54")
-
+//    implementation("iq.aau.babylai.android:babylaisdk:1.0.65")
+//    implementation("io.github.aau-iq:babylai-android-sdk:1.0.65")
+    implementation(project(":BabylAISDK"))
     // Android Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

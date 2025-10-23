@@ -92,7 +92,7 @@ object TokenClient {
             val jsonBody = json.encodeToString(TokenRequest.serializer(), requestBody)
             
             val request = Request.Builder()
-                .url("https://babylai.net/api/Auth/client/get-token")
+                .url("https://babylai-be.dev.kvm.creativeadvtech.ml/Auth/client/get-token")
                 .post(
                     jsonBody.toRequestBody("application/json".toMediaTypeOrNull())
                 )
