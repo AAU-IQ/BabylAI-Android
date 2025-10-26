@@ -12,7 +12,6 @@ gesture:
 	$(ADB) shell killall com.android.systemui
 	@echo "✅ Gesture navigation enabled."
 
-# Switch to 3-button navigation
 buttons:
 	@echo "Switching to 3-button navigation..."
 	$(ADB) shell cmd overlay enable --user 0 com.android.internal.systemui.navbar.threebutton
