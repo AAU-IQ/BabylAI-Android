@@ -131,7 +131,8 @@ class MainActivity : AppCompatActivity() {
                 secondaryColor = "#D4AF37".toColorInt(),         // Sophisticated gold for light theme
                 primaryColorDark = "#81C784".toColorInt(),       // Soft sage green for dark theme
                 secondaryColorDark = "#F9D71C".toColorInt(),     // Warm amber for dark theme
-                headerLogoRes = R.drawable.your_custom_logo      // Optional: Your brand logo
+                headerLogoRes = R.drawable.your_custom_logo,     // Optional: Your brand logo
+                logoSymbolRes = R.drawable.your_logo_icon        // Optional: Small icon for chat avatars
             ),
             onErrorReceived = { error ->
                 // Optional: Handle global errors
