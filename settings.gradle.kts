@@ -24,6 +24,8 @@ dependencyResolutionManagement {
             }
             content { includeGroup("iq.aau.babylai.android") }
         }
+        maven { url = uri("https://jitpack.io") }
+
     }
 }
 
