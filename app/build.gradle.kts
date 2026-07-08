@@ -20,8 +20,18 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = false
+            isDebuggable = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        release {
+            isMinifyEnabled = true
+
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -41,9 +51,13 @@ android {
 }
 
 dependencies {
-    // BabylAI SDK - from distribution repository
-    implementation("iq.aau.babylai.android:babylaisdk:1.0.54")
-
+    // BabylAI SDK - local source when :BabylAISDK is included via local.settings.gradle.kts,
+    // otherwise the published artifact from the distribution repository.
+    if (findProject(":BabylAISDK") != null) {
+        implementation(project(":BabylAISDK"))
+    } else {
+        implementation("iq.aau.babylai.android:babylaisdk:1.1.18")
+    }
     // Android Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -24,8 +24,16 @@ dependencyResolutionManagement {
             }
             content { includeGroup("iq.aau.babylai.android") }
         }
+        maven { url = uri("https://jitpack.io") }
+
     }
 }
 
 rootProject.name = "BabylAI-Example"
 include(":app")
+
+
+val localSdkOverride = File(rootDir, "local.settings.gradle.kts")
+if (localSdkOverride.exists()) {
+    apply(from = localSdkOverride)
+}

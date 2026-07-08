@@ -7,6 +7,8 @@
 
 package iq.aau.babylai.android.BabylAI
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Colors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -70,6 +74,18 @@ enum class BabylAIEnvironment(val displayName: String) {
     PRODUCTION("Production")
 }
 
+suspend fun getTokenExample(apiKey: String, tenantId: String): String {
+    return try {
+        TokenClient.fetchToken(
+            apiKey = apiKey,
+            tenantId = tenantId
+        )
+    } catch (e: Exception) {
+        println("❌ Error during token fetch: ${e.message}")
+        ""
+    }
+}
+
 /**
  * Main example view with navigation that demonstrates BabylAI SDK integration
  */
@@ -83,8 +99,13 @@ fun BabylAIExampleView() {
     var isInitialized by rememberSaveable { mutableStateOf(false) }
     var environment by rememberSaveable { mutableStateOf(BabylAIEnvironment.DEVELOPMENT) }
     var initializationError by rememberSaveable { mutableStateOf<String?>(null) }
-    val SCREEN_ID = "YOUR_SCREEN_ID"
-    
+
+    // Editable credentials, cached in-memory for this session (blank until entered)
+    var screenId by rememberSaveable { mutableStateOf("") }
+    var tenantId by rememberSaveable { mutableStateOf("") }
+    var apiKey by rememberSaveable { mutableStateOf("") }
+
+
     NavHost(
         navController = navController,
         startDestination = "home"
@@ -97,34 +118,37 @@ fun BabylAIExampleView() {
                 isInitialized = isInitialized,
                 environment = environment,
                 initializationError = initializationError,
+                screenId = screenId,
+                tenantId = tenantId,
+                apiKey = apiKey,
                 onThemeChange = { isDarkMode = it },
                 onLanguageChange = { isArabic = it },
                 onInitializationChange = { isInitialized = it },
                 onEnvironmentChange = { environment = it },
-                onErrorChange = { initializationError = it }
+                onErrorChange = { initializationError = it },
+                onScreenIdChange = { screenId = it },
+                onTenantIdChange = { tenantId = it },
+                onApiKeyChange = { apiKey = it }
             )
         }
         composable("chat") {
             BabylAIChatScreen(
                 navController = navController,
-                isDirect = false,
-                screenId = SCREEN_ID,
+                screenId = screenId,
                 isDarkMode = isDarkMode
             )
         }
         composable("activeChat") {
             BabylAIChatScreen(
                 navController = navController,
-                isDirect = true,
-                screenId = SCREEN_ID,
+                screenId = screenId,
                 isDarkMode = isDarkMode
             )
         }
         composable("chatDirect") {
             BabylAIDirectChatScreen(
                 navController = navController,
-                isDirect = false,
-                screenId = SCREEN_ID,
+                screenId = screenId,
                 isDarkMode = isDarkMode
             )
         }
@@ -143,11 +167,17 @@ fun HomeScreen(
     isInitialized: Boolean,
     environment: BabylAIEnvironment,
     initializationError: String?,
+    screenId: String,
+    tenantId: String,
+    apiKey: String,
     onThemeChange: (Boolean) -> Unit,
     onLanguageChange: (Boolean) -> Unit,
     onInitializationChange: (Boolean) -> Unit,
     onEnvironmentChange: (BabylAIEnvironment) -> Unit,
-    onErrorChange: (String?) -> Unit
+    onErrorChange: (String?) -> Unit,
+    onScreenIdChange: (String) -> Unit,
+    onTenantIdChange: (String) -> Unit,
+    onApiKeyChange: (String) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -173,7 +203,26 @@ fun HomeScreen(
                 text = "SDK Configuration",
                 style = MaterialTheme.typography.headlineSmall
             )
-            
+
+            // Credentials (editable, cached in-memory for this session)
+            CredentialField(
+                value = screenId,
+                onValueChange = onScreenIdChange,
+                label = "Help Screen ID"
+            )
+
+            CredentialField(
+                value = tenantId,
+                onValueChange = onTenantIdChange,
+                label = "Tenant ID"
+            )
+
+            CredentialField(
+                value = apiKey,
+                onValueChange = onApiKeyChange,
+                label = "API Key"
+            )
+
             // Theme Toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -214,11 +263,11 @@ fun HomeScreen(
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    BabylAIEnvironment.values().forEachIndexed { index, env ->
+                    BabylAIEnvironment.entries.forEachIndexed { index, env ->
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(
                                 index = index,
-                                count = BabylAIEnvironment.values().size
+                                count = BabylAIEnvironment.entries.size
                             ),
                             onClick = { onEnvironmentChange(env) },
                             selected = environment == env
@@ -262,7 +311,7 @@ fun HomeScreen(
                             )
                             
                             BabylAI.shared.setTokenCallback {
-                                getTokenExample()
+                                getTokenExample(apiKey = apiKey, tenantId = tenantId)
                             }
                             BabylAI.shared.setOnErrorReceived { error: BabylAIError ->
                                 println("❌ SDK Error [${error.errorCode}]: ${error.userFriendlyMessage}")
@@ -348,12 +397,51 @@ fun HomeScreen(
 }
 
 /**
+ * Single-line credential input with a "Paste from clipboard" trailing button.
+ */
+@Composable
+private fun CredentialField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier.fillMaxWidth()
+) {
+    val context = LocalContext.current
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        singleLine = true,
+        trailingIcon = {
+            IconButton(onClick = {
+                readClipboardText(context)?.let(onValueChange)
+            }) {
+                Icon(
+                    imageVector = Icons.Default.ContentPaste,
+                    contentDescription = "Paste $label"
+                )
+            }
+        },
+        modifier = modifier
+    )
+}
+
+/**
+ * Reads the first item of the system clipboard as trimmed text, or null if empty.
+ */
+private fun readClipboardText(context: Context): String? {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+    val clip = clipboard?.primaryClip ?: return null
+    if (clip.itemCount == 0) return null
+    return clip.getItemAt(0).coerceToText(context).toString().trim().ifEmpty { null }
+}
+
+/**
  * BabylAI Chat Screen that properly displays the SDK without top bar
  */
 @Composable
 fun BabylAIChatScreen(
     navController: NavController,
-    isDirect: Boolean,
     screenId: String,
     isDarkMode: Boolean
 ) {
@@ -367,21 +455,21 @@ fun BabylAIChatScreen(
     val currentTheme = if (isDarkMode) BabylAITheme.DARK else BabylAITheme.LIGHT
     println("🎨 BabylAIChatScreen - isDarkMode: $isDarkMode, theme: $currentTheme")
     
-    val viewerComposable = BabylAI.shared.getViewerComposable(
+    val viewerComposable = BabylAI.shared.viewer(
         theme = currentTheme,
-        isDirect = isDirect,
+        isDirect = false,
         screenId = screenId,
         onMessageReceived = { message ->
             println("📨 Received message: $message")
         },
-        onBack = {
+        onDismiss ={
             // Handle SDK back navigation - go back to home screen
             navController.popBackStack()
         }
     )
-    
+
     // Display the SDK view - it will take full screen
-    viewerComposable()
+//    viewerComposable()
 }
 
 /**
@@ -390,7 +478,6 @@ fun BabylAIChatScreen(
 @Composable
 fun BabylAIDirectChatScreen(
     navController: NavController,
-    isDirect: Boolean,
     screenId: String,
     isDarkMode: Boolean
 ) {
@@ -398,40 +485,30 @@ fun BabylAIDirectChatScreen(
     androidx.activity.compose.BackHandler {
         navController.popBackStack()
     }
-    
+
     // No Scaffold or TopAppBar - let the SDK handle full-screen experience
     // Get the direct SDK content without token validation
-    val directContent = BabylAI.shared.getDirectSDKContent(
+    val directContent = BabylAI.shared.viewer(
         theme = if (isDarkMode) BabylAITheme.DARK else BabylAITheme.LIGHT,
-        isDirect = isDirect,
+        isDirect = true,
         screenId = screenId,
         onMessageReceived = { message ->
             println("📨 [Direct] Received message: $message")
         },
-        onBack = {
+        onDismiss = {
             // Handle SDK back navigation - go back to home screen
             navController.popBackStack()
         }
     )
-    
+
     // Display the SDK view - it will take full screen
-    directContent()
+//    directContent()
 }
 
 /**
  * Token fetching function (mirrors iOS implementation)
  */
-suspend fun getTokenExample(): String {
-    return try {
-        TokenClient.fetchToken(
-            apiKey = "YOUR_API_KEY",
-            tenantId = "TENANT_ID"
-        )
-    } catch (e: Exception) {
-        println("❌ Error during token fetch: ${e.message}")
-        ""
-    }
-}
+
 
 @Preview(showBackground = true)
 @Composable
