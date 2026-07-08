@@ -7,6 +7,8 @@
 
 package iq.aau.babylai.android.BabylAI
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Colors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -70,6 +74,24 @@ enum class BabylAIEnvironment(val displayName: String) {
     PRODUCTION("Production")
 }
 
+// Default credentials used to prefill the editable fields on the Home screen.
+// The user can override these at runtime; the entered values are cached for the session.
+const val DEFAULT_SCREEN_ID = "1ca1b5d8-a997-4058-90cf-eef7e0b12a03"
+const val DEFAULT_TENANT_ID = "4d61527f-f963-4558-b242-22d3bc433a22"
+const val DEFAULT_API_KEY = "kqR7Uq8a7c+3wd9GvKLJihLKOMoi5n2lMsTKrQMG6+0="
+
+suspend fun getTokenExample(apiKey: String, tenantId: String): String {
+    return try {
+        TokenClient.fetchToken(
+            apiKey = apiKey,
+            tenantId = tenantId
+        )
+    } catch (e: Exception) {
+        println("❌ Error during token fetch: ${e.message}")
+        ""
+    }
+}
+
 /**
  * Main example view with navigation that demonstrates BabylAI SDK integration
  */
@@ -83,8 +105,13 @@ fun BabylAIExampleView() {
     var isInitialized by rememberSaveable { mutableStateOf(false) }
     var environment by rememberSaveable { mutableStateOf(BabylAIEnvironment.DEVELOPMENT) }
     var initializationError by rememberSaveable { mutableStateOf<String?>(null) }
-    val SCREEN_ID = "b0e9cb1d-a0f7-40e0-aa49-4127069d9cdc"
-    
+
+    // Editable credentials, cached in-memory for this session
+    var screenId by rememberSaveable { mutableStateOf(DEFAULT_SCREEN_ID) }
+    var tenantId by rememberSaveable { mutableStateOf(DEFAULT_TENANT_ID) }
+    var apiKey by rememberSaveable { mutableStateOf(DEFAULT_API_KEY) }
+
+
     NavHost(
         navController = navController,
         startDestination = "home"
@@ -97,31 +124,37 @@ fun BabylAIExampleView() {
                 isInitialized = isInitialized,
                 environment = environment,
                 initializationError = initializationError,
+                screenId = screenId,
+                tenantId = tenantId,
+                apiKey = apiKey,
                 onThemeChange = { isDarkMode = it },
                 onLanguageChange = { isArabic = it },
                 onInitializationChange = { isInitialized = it },
                 onEnvironmentChange = { environment = it },
-                onErrorChange = { initializationError = it }
+                onErrorChange = { initializationError = it },
+                onScreenIdChange = { screenId = it },
+                onTenantIdChange = { tenantId = it },
+                onApiKeyChange = { apiKey = it }
             )
         }
         composable("chat") {
             BabylAIChatScreen(
                 navController = navController,
-                screenId = SCREEN_ID,
+                screenId = screenId,
                 isDarkMode = isDarkMode
             )
         }
         composable("activeChat") {
             BabylAIChatScreen(
                 navController = navController,
-                screenId = SCREEN_ID,
+                screenId = screenId,
                 isDarkMode = isDarkMode
             )
         }
         composable("chatDirect") {
             BabylAIDirectChatScreen(
                 navController = navController,
-                screenId = SCREEN_ID,
+                screenId = screenId,
                 isDarkMode = isDarkMode
             )
         }
@@ -140,11 +173,17 @@ fun HomeScreen(
     isInitialized: Boolean,
     environment: BabylAIEnvironment,
     initializationError: String?,
+    screenId: String,
+    tenantId: String,
+    apiKey: String,
     onThemeChange: (Boolean) -> Unit,
     onLanguageChange: (Boolean) -> Unit,
     onInitializationChange: (Boolean) -> Unit,
     onEnvironmentChange: (BabylAIEnvironment) -> Unit,
-    onErrorChange: (String?) -> Unit
+    onErrorChange: (String?) -> Unit,
+    onScreenIdChange: (String) -> Unit,
+    onTenantIdChange: (String) -> Unit,
+    onApiKeyChange: (String) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -170,7 +209,26 @@ fun HomeScreen(
                 text = "SDK Configuration",
                 style = MaterialTheme.typography.headlineSmall
             )
-            
+
+            // Credentials (editable, cached in-memory for this session)
+            CredentialField(
+                value = screenId,
+                onValueChange = onScreenIdChange,
+                label = "Help Screen ID"
+            )
+
+            CredentialField(
+                value = tenantId,
+                onValueChange = onTenantIdChange,
+                label = "Tenant ID"
+            )
+
+            CredentialField(
+                value = apiKey,
+                onValueChange = onApiKeyChange,
+                label = "API Key"
+            )
+
             // Theme Toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -259,7 +317,7 @@ fun HomeScreen(
                             )
                             
                             BabylAI.shared.setTokenCallback {
-                                getTokenExample()
+                                getTokenExample(apiKey = apiKey, tenantId = tenantId)
                             }
                             BabylAI.shared.setOnErrorReceived { error: BabylAIError ->
                                 println("❌ SDK Error [${error.errorCode}]: ${error.userFriendlyMessage}")
@@ -345,6 +403,46 @@ fun HomeScreen(
 }
 
 /**
+ * Single-line credential input with a "Paste from clipboard" trailing button.
+ */
+@Composable
+private fun CredentialField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier.fillMaxWidth()
+) {
+    val context = LocalContext.current
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        singleLine = true,
+        trailingIcon = {
+            IconButton(onClick = {
+                readClipboardText(context)?.let(onValueChange)
+            }) {
+                Icon(
+                    imageVector = Icons.Default.ContentPaste,
+                    contentDescription = "Paste $label"
+                )
+            }
+        },
+        modifier = modifier
+    )
+}
+
+/**
+ * Reads the first item of the system clipboard as trimmed text, or null if empty.
+ */
+private fun readClipboardText(context: Context): String? {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+    val clip = clipboard?.primaryClip ?: return null
+    if (clip.itemCount == 0) return null
+    return clip.getItemAt(0).coerceToText(context).toString().trim().ifEmpty { null }
+}
+
+/**
  * BabylAI Chat Screen that properly displays the SDK without top bar
  */
 @Composable
@@ -416,17 +514,7 @@ fun BabylAIDirectChatScreen(
 /**
  * Token fetching function (mirrors iOS implementation)
  */
-suspend fun getTokenExample(): String {
-    return try {
-        TokenClient.fetchToken(
-            apiKey = "Y0DWmfXvna4Ojmj6Huru3mn/BnMU2ciSv2wDDeTpA3c=",
-            tenantId = "c300b185-8554-436c-ae64-ab5db552594b"
-        )
-    } catch (e: Exception) {
-        println("❌ Error during token fetch: ${e.message}")
-        ""
-    }
-}
+
 
 @Preview(showBackground = true)
 @Composable
