@@ -31,5 +31,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "BabylAI-Example"
 include(":app")
-include(":BabylAISDK")
-project(":BabylAISDK").projectDir = File("/Users/abd/AAU/babyl_android/babylai-android-sdk/BabylAISDK")
+
+
+val localSdkOverride = File(rootDir, "local.settings.gradle.kts")
+if (localSdkOverride.exists()) {
+    apply(from = localSdkOverride)
+}

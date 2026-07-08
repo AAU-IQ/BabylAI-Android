@@ -74,12 +74,6 @@ enum class BabylAIEnvironment(val displayName: String) {
     PRODUCTION("Production")
 }
 
-// Default credentials used to prefill the editable fields on the Home screen.
-// The user can override these at runtime; the entered values are cached for the session.
-const val DEFAULT_SCREEN_ID = "1ca1b5d8-a997-4058-90cf-eef7e0b12a03"
-const val DEFAULT_TENANT_ID = "4d61527f-f963-4558-b242-22d3bc433a22"
-const val DEFAULT_API_KEY = "kqR7Uq8a7c+3wd9GvKLJihLKOMoi5n2lMsTKrQMG6+0="
-
 suspend fun getTokenExample(apiKey: String, tenantId: String): String {
     return try {
         TokenClient.fetchToken(
@@ -106,10 +100,10 @@ fun BabylAIExampleView() {
     var environment by rememberSaveable { mutableStateOf(BabylAIEnvironment.DEVELOPMENT) }
     var initializationError by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Editable credentials, cached in-memory for this session
-    var screenId by rememberSaveable { mutableStateOf(DEFAULT_SCREEN_ID) }
-    var tenantId by rememberSaveable { mutableStateOf(DEFAULT_TENANT_ID) }
-    var apiKey by rememberSaveable { mutableStateOf(DEFAULT_API_KEY) }
+    // Editable credentials, cached in-memory for this session (blank until entered)
+    var screenId by rememberSaveable { mutableStateOf("") }
+    var tenantId by rememberSaveable { mutableStateOf("") }
+    var apiKey by rememberSaveable { mutableStateOf("") }
 
 
     NavHost(
