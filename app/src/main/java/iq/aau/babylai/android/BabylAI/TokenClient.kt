@@ -80,7 +80,7 @@ object TokenClient {
     /**
      * Fetch authentication token from the API
      */
-    suspend fun fetchToken(apiKey: String, tenantId: String): String = withContext(Dispatchers.IO) {
+    suspend fun fetchToken(apiKey: String, tenantId: String, baseUrl: String): String = withContext(Dispatchers.IO) {
         try {
             println("🔑 Starting token fetch...")
             
@@ -92,7 +92,7 @@ object TokenClient {
             val jsonBody = json.encodeToString(TokenRequest.serializer(), requestBody)
             
             val request = Request.Builder()
-                .url("https://babylai-be.dev.kvm.creativeadvtech.ml/Auth/client/get-token")
+                .url("${baseUrl}Auth/client/get-token")
                 .post(
                     jsonBody.toRequestBody("application/json".toMediaTypeOrNull())
                 )

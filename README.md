@@ -16,7 +16,7 @@ An Android SDK that provides integration with BabylAI chat functionality, suppor
 - 📬 Message receiving callback for custom notification handling
 - ⚠️ **Comprehensive Error Handling** - Global and view-specific error callbacks
 - ⚡ Quick access to active chats
-- 🏗️ Environment-based configuration (Production/Development)
+- 🏗️ Environment-based configuration (Production/Staging/Development)
 - 🔒 Secure, predefined API endpoints
 - 📱 Jetpack Compose UI components
 - 🎨 Material Design 3 theming with automatic color generation
@@ -162,9 +162,10 @@ class MainActivity : AppCompatActivity() {
 
 ### Environment Configuration
 
-The package supports two environments:
+The package supports three environments:
 
 - **Production**: Uses production API endpoints, logging disabled by default
+- **Staging**: Uses staging API endpoints, logging enabled by default
 - **Development**: Uses development API endpoints, logging enabled by default
 
 You can create environment configurations using factory methods:
@@ -175,6 +176,9 @@ val productionConfig = EnvironmentConfig.production()
 
 // Production environment with logging enabled
 val productionConfigWithLogging = EnvironmentConfig.production(enableLogging = true)
+
+// Staging environment (logging enabled by default)
+val stagingConfig = EnvironmentConfig.staging()
 
 // Development environment (logging enabled by default)
 val developmentConfig = EnvironmentConfig.development()
@@ -518,6 +522,14 @@ BabylAI.shared.viewer(
 ## Example App
 
 For a complete integration example, see [BabylAI-Android-Example](https://github.com/AAU-IQ/BabylAI-Android/tree/main/app/src/main/java/iq/aau/babylai/android/BabylAI).
+
+To prefill the example app's credential fields in debug builds, add them to your git-ignored `local.properties`:
+
+```properties
+babylai.helpScreenId=<your-help-screen-id>
+babylai.tenantId=<your-tenant-id>
+babylai.apiKey=<your-api-key>
+```
 
 ## Contributing
 

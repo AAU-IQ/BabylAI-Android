@@ -1,9 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
+fun localStringField(key: String): String = "\"${localProperties.getProperty(key, "")}\""
 
 android {
     namespace = "iq.aau.babylai.android.BabylAI"
@@ -27,6 +35,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Debug-only credential prefills, read from the gitignored local.properties
+            buildConfigField("String", "DEFAULT_HELP_SCREEN_ID", localStringField("babylai.helpScreenId"))
+            buildConfigField("String", "DEFAULT_TENANT_ID", localStringField("babylai.tenantId"))
+            buildConfigField("String", "DEFAULT_API_KEY", localStringField("babylai.apiKey"))
         }
         release {
             isMinifyEnabled = true
@@ -36,6 +48,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "DEFAULT_HELP_SCREEN_ID", "\"\"")
+            buildConfigField("String", "DEFAULT_TENANT_ID", "\"\"")
+            buildConfigField("String", "DEFAULT_API_KEY", "\"\"")
         }
     }
     compileOptions {
@@ -47,6 +62,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

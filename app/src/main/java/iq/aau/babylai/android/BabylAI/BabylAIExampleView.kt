@@ -71,14 +71,16 @@ import androidx.core.graphics.toColorInt
  */
 enum class BabylAIEnvironment(val displayName: String) {
     DEVELOPMENT("Development"),
+    STAGING("Staging"),
     PRODUCTION("Production")
 }
 
-suspend fun getTokenExample(apiKey: String, tenantId: String): String {
+suspend fun getTokenExample(apiKey: String, tenantId: String, baseUrl: String): String {
     return try {
         TokenClient.fetchToken(
             apiKey = apiKey,
-            tenantId = tenantId
+            tenantId = tenantId,
+            baseUrl = baseUrl
         )
     } catch (e: Exception) {
         println("❌ Error during token fetch: ${e.message}")
@@ -100,10 +102,10 @@ fun BabylAIExampleView() {
     var environment by rememberSaveable { mutableStateOf(BabylAIEnvironment.DEVELOPMENT) }
     var initializationError by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Editable credentials, cached in-memory for this session (blank until entered)
-    var screenId by rememberSaveable { mutableStateOf("") }
-    var tenantId by rememberSaveable { mutableStateOf("") }
-    var apiKey by rememberSaveable { mutableStateOf("") }
+    // Editable credentials, prefilled from local.properties in debug builds only
+    var screenId by rememberSaveable { mutableStateOf(BuildConfig.DEFAULT_HELP_SCREEN_ID) }
+    var tenantId by rememberSaveable { mutableStateOf(BuildConfig.DEFAULT_TENANT_ID) }
+    var apiKey by rememberSaveable { mutableStateOf(BuildConfig.DEFAULT_API_KEY) }
 
 
     NavHost(
@@ -294,6 +296,7 @@ fun HomeScreen(
                         try {
                             val config = when (environment) {
                                 BabylAIEnvironment.PRODUCTION -> EnvironmentConfig.production(enableLogging = true)
+                                BabylAIEnvironment.STAGING -> EnvironmentConfig.staging()
                                 BabylAIEnvironment.DEVELOPMENT -> EnvironmentConfig.development()
                             }
                             
@@ -311,7 +314,7 @@ fun HomeScreen(
                             )
                             
                             BabylAI.shared.setTokenCallback {
-                                getTokenExample(apiKey = apiKey, tenantId = tenantId)
+                                getTokenExample(apiKey = apiKey, tenantId = tenantId, baseUrl = config.baseUrl)
                             }
                             BabylAI.shared.setOnErrorReceived { error: BabylAIError ->
                                 println("❌ SDK Error [${error.errorCode}]: ${error.userFriendlyMessage}")
