@@ -15,11 +15,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 /**
  * Request model for token API
@@ -47,34 +43,11 @@ object TokenClient {
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
-        .hostnameVerifier { _, _ -> true }
-        .sslSocketFactory(createSSLSocketFactory(), createTrustManager())
         .build()
-    
+
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
-    }
-    
-    /**
-     * Create a trust manager that trusts all certificates
-     */
-    private fun createTrustManager(): X509TrustManager {
-        return object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
-            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
-            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-        }
-    }
-
-    /**
-     * Create an SSL socket factory that trusts all certificates
-     */
-    private fun createSSLSocketFactory(): javax.net.ssl.SSLSocketFactory {
-        val trustManager = createTrustManager()
-        val sslContext = SSLContext.getInstance("SSL")
-        sslContext.init(null, arrayOf(trustManager), java.security.SecureRandom())
-        return sslContext.socketFactory
     }
 
     /**
